@@ -1,6 +1,6 @@
 'use strict';
 const cacheName = 'app-v1';
-const pathRoot = '/test/progressive/demo/'
+const pathRoot = '/test/progressive/demo/' // change to your directory
 const filesToCache = [
 	'',
 	'index.html',
@@ -8,32 +8,36 @@ const filesToCache = [
 	'style.css'
 ];
 
+// Triggers when installing
 self.addEventListener('install', ev => {
-	console.info('ServiceWorker ' + cacheName + ': Installation');
+	console.info('ServiceWorker ' + cacheName + ': installation');
 	ev.waitUntil(
 		caches
 			.open(cacheName)
 			.then(cache => {
-				console.info('ServiceWorker ' + cacheName + ': Caching der App');
+				// cache all files from list
+				console.info('ServiceWorker ' + cacheName + ': caching of app');
 				cache.addAll(filesToCache.map(el => {
 					return pathRoot + el;
 				}));
 			})
 			.catch(err => {
-				console.error('Fehler!', err);
+				console.error('Error!', err);
 			})
 	);
 });
 
+// Triggers after install has finished
 self.addEventListener('activate', ev => {
-	console.info('ServiceWorker ' + cacheName + ': Aktivierung');
+	console.info('ServiceWorker ' + cacheName + ': activation');
 	ev.waitUntil(
 		caches
 			.keys()
 			.then(keyList => {
+				// delete unused caches
 				keyList.forEach(key => {
 					if (key !== cacheName) {
-						console.info('ServiceWorker ' + cacheName + ': Lösche ' + key);
+						console.info('ServiceWorker ' + cacheName + ': delete ' + key);
 						caches.delete(key);
 					}
 				});
@@ -42,14 +46,17 @@ self.addEventListener('activate', ev => {
 	return self.clients.claim();
 });
 
+// Triggers when a URL is requested
 self.addEventListener('fetch', ev => {
-	console.info('ServiceWorker ' + cacheName + ': Hole ' + ev.request.url);
+	console.info('ServiceWorker ' + cacheName + ': get ' + ev.request.url);
 	ev.respondWith(
 		caches
 		.match(ev.request)
 		.then(response => {
-			if (response) {
-				console.info('ServiceWorker ' + cacheName + ': Lade aus dem Cache ' + response.url);
+			if (response) { // is it in the cache?
+				console.info('ServiceWorker ' + cacheName + ': loading from cache ' + response.url);
+				// If it's an HTML page change the response
+				// insert a hint above the <h1>
 				if (response.headers.get('Content-Type') === 'text/html') {
 					return response.text().then(txt => {
 						let head = {
@@ -63,19 +70,19 @@ self.addEventListener('fetch', ev => {
 				}
 				return response;
 			}
-			return fetch(ev.request) // Nicht im Cache gefunden
+			return fetch(ev.request) // Not found in cache: fetch it
 			.then(response => {
-				console.info('ServiceWorker ' + cacheName + ': Lade aus dem Netzwerk ' + response.url);
+				console.info('ServiceWorker ' + cacheName + ': Loading from network ' + response.url);
 				if (!response.ok) {
 					if (response.type === 'opaque')
-						console.warn('Kein Zugriff auf Daten', ev.request.url);
+						console.warn('No access to data', ev.request.url);
 					else
-						console.warn('URL-Fehler', response.status, response.url);
+						console.warn('URL error', response.status, response.url);
 				}
 				return response;
 			})
 			.catch(err => {
-				console.error('ServiceWorker ' + cacheName + ': Laden aus dem Netzwerk ist gescheitert', err);
+				console.error('ServiceWorker ' + cacheName + ': Loading from network has failed', err);
 			});
 		})
 	)

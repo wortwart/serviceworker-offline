@@ -1,5 +1,5 @@
 'use strict';
-const cacheName = 'app-v1';
+const cacheName = 'app-v1'; // change when cached content is updated
 const pathRoot = '/test/progressive/demo/' // change to your directory
 const filesToCache = [
 	'',
